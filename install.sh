@@ -45,6 +45,12 @@ function install_packages()
 {
     pacman -Sy \
         vim
-
-
 }
+
+hostname
+timezone
+enable_locales
+set_keymap
+mkinitcpio
+install_bootloader
+install_packages

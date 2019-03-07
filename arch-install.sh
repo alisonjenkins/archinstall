@@ -114,13 +114,11 @@ partition_disk() # {{{
     # Setup EFI and boot
     parted -s "$DISK_PATH" "mklabel gpt"
     parted -s "$DISK_PATH" "mkpart esp fat32 1M 1G"
-    parted -s "$DISK_PATH" "mkpart boot ext4 1G 2G"
-    parted -s "$DISK_PATH" "mkpart lvm ext2 2G -1"
+    parted -s "$DISK_PATH" "mkpart lvm ext2 1G -1"
     parted -s "$DISK_PATH" "name 1 esp"
-    parted -s "$DISK_PATH" "name 2 boot"
-    parted -s "$DISK_PATH" "name 3 lvm"
+    parted -s "$DISK_PATH" "name 2 lvm"
     parted -s "$DISK_PATH" "toggle 1 boot"
-    parted -s "$DISK_PATH" "toggle 3 lvm"
+    parted -s "$DISK_PATH" "toggle 2 lvm"
 } # }}}
 format_partitions() # {{{
 {
@@ -128,23 +126,19 @@ format_partitions() # {{{
     get_partitions "$DISK"
     get_partition 0
     mkfs.vfat -F32 /dev/"$PART_NAME"
-    get_partition 1
-    mkfs.ext4 -F /dev/"$PART_NAME"
 } # }}}
 setup_luks() # {{{
 {
     echo "Setting up encrypted partitions"
-    get_partition 2
+    get_partition 1
     echo -n "$ENCRPYTION_PASS" | cryptsetup luksFormat /dev/"$PART_NAME" -
     echo -n "$ENCRPYTION_PASS" | cryptsetup open --type luks /dev/"$PART_NAME" lvm -
     pvcreate /dev/mapper/lvm
     vgcreate volgroup /dev/mapper/lvm
     lvcreate -L 20G volgroup -n lvolswap
-    lvcreate -l 50%FREE volgroup -n lvolroot
-    lvcreate -l 100%FREE volgroup -n lvolhome
+    lvcreate -l 100%FREE volgroup -n lvolroot
     mkswap -L swap /dev/mapper/volgroup-lvolswap
-    mkfs.btrfs -L root /dev/mapper/volgroup-lvolroot
-    mkfs.btrfs -L home /dev/mapper/volgroup-lvolhome
+    mkfs.xfs -L root /dev/mapper/volgroup-lvolroot
 } # }}}
 mount_partitions() # {{{
 {
@@ -152,27 +146,27 @@ mount_partitions() # {{{
     mount /dev/mapper/volgroup-lvolroot /mnt
     swapon /dev/mapper/volgroup-lvolswap
 
-    mkdir /mnt/home
-    mount /dev/mapper/volgroup-lvolhome /mnt/home
-
-    get_partition 1
-    mkdir /mnt/boot
-    mount "/dev/$PART_NAME" /mnt/boot
-
     get_partition 0
-    mkdir /mnt/boot/esp
-    mount "/dev/$PART_NAME" /mnt/boot/esp
+    mkdir /mnt/efi
+    mount "/dev/$PART_NAME" /mnt/efi
+    mkdir -p /mnt/boot
+    mkdir -p /mnt/efi/EFI/arch
+    mount --bind /mnt/efi/EFI/arch /mnt/boot
 } # }}}
 function find_fastest_mirror() # {{{
 {
-  pacman -S --noconfirm reflector
-  reflector --latest 200 --protocol http --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+  pacman -S --noconfirm reflector pacman-contrib
+  #curl -s "https://www.archlinux.org/mirrorlist/?country=FR&country=GB&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
+  reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+  mkdir -p /mnt/etc/pacman.d
+  cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
 } # }}}
 install_base_system() # {{{
 {
     echo "Installing system"
-    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git puppet wget ruby-shadow
+    mkdir -p /mnt/etc/
     genfstab -L /mnt > /mnt/etc/fstab
+    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git puppet wget ruby-shadow linux-zen linux-zen-headers
 } # }}}
 setup_locales() # {{{
 {
@@ -193,58 +187,64 @@ create_initcpio() # {{{
     echo "Creating initcpio"
     chroot_command "sed -i 's/base udev autodetect modconf block filesystems keyboard fsck/base udev encrypt autodetect modconf block lvm2 resume filesystems keyboard fsck/g' /etc/mkinitcpio.conf"
     chroot_command "mkinitcpio -p linux"
+    chroot_command "mkinitcpio -p linux-zen"
 } # }}}
-setup_efi() # {{{
-{
-    echo "Setup EFI"
-    mkdir -p /mnt/boot/esp/EFI/arch
-    cp /mnt/boot/vmlinuz-linux /mnt/boot/esp/EFI/arch
-    cp /mnt/boot/initramfs-linux.img /mnt/boot/esp/EFI/arch
+# setup_efi() # {{{
+# {
+#     echo "Setup EFI"
+#     mkdir -p /mnt/boot/esp/EFI/arch
+#     cp /mnt/boot/vmlinuz-linux /mnt/boot/esp/EFI/arch
+#     cp /mnt/boot/initramfs-linux.img /mnt/boot/esp/EFI/arch
 
-    cat <<'EOF' >> /mnt/etc/systemd/system/efistub-update.path
-    [Unit]
-    Description=Copy EFISTUB Kernel to EFI System Partition
+#     cat <<'EOF' >> /mnt/etc/systemd/system/efistub-update.path
+#     [Unit]
+#     Description=Copy EFISTUB Kernel to EFI System Partition
 
-    [Path]
-    PathChanged=/boot/initramfs-linux-fallback.img
+#     [Path]
+#     PathChanged=/boot/initramfs-linux-fallback.img
 
-    [Install]
-    WantedBy=multi-user.target
-    WantedBy=system-update.target
-EOF
+#     [Install]
+#     WantedBy=multi-user.target
+#     WantedBy=system-update.target
+# EOF
 
-    cat <<'EOF' >> /mnt/etc/systemd/system/efistub-update.service
-    [Unit]
-    Description=Copy EFISTUB Kernel to EFI System Partition
+#     cat <<'EOF' >> /mnt/etc/systemd/system/efistub-update.service
+#     [Unit]
+#     Description=Copy EFISTUB Kernel to EFI System Partition
 
-    [Service]
-    Type=oneshot
-    ExecStart=/usr/bin/cp -f /boot/vmlinuz-linux /boot/esp/EFI/arch/vmlinuz-linux
-    ExecStart=/usr/bin/cp -f /boot/initramfs-linux.img /boot/esp/EFI/arch/initramfs-linux.img
-    ExecStart=/usr/bin/cp -f /boot/initramfs-linux-fallback.img /boot/esp/EFI/arch/initramfs-linux-fallback.img
-EOF
+#     [Service]
+#     Type=oneshot
+#     ExecStart=/usr/bin/cp -f /boot/vmlinuz-linux /boot/esp/EFI/arch/vmlinuz-linux
+#     ExecStart=/usr/bin/cp -f /boot/initramfs-linux.img /boot/esp/EFI/arch/initramfs-linux.img
+#     ExecStart=/usr/bin/cp -f /boot/initramfs-linux-fallback.img /boot/esp/EFI/arch/initramfs-linux-fallback.img
+# EOF
 
-    chroot_command "systemctl enable efistub-update.path"
-} # }}}
+#     chroot_command "systemctl enable efistub-update.path"
+# } # }}}
 setup_systemd_boot() # {{{
 {
     echo "Setting up systemd-boot"
-    get_partition 2
+    get_partition 1
     local LUKSUUID=$(blkid /dev/$PART_NAME | awk '{ print $2; }' | sed 's/"//g')
 
-    chroot_command "bootctl --path=/boot/esp install"
+    chroot_command "bootctl --path=/efi/ install"
 
-    echo "label Arch Linux" >> /mnt/boot/esp/loader/entries/arch.conf
-    echo "linux /EFI/arch/vmlinuz-linux" >> /mnt/boot/esp/loader/entries/arch.conf
-    echo "initrd /EFI/arch/initramfs-linux.img" >> /mnt/boot/esp/loader/entries/arch.conf
-    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux.img" >> /mnt/boot/esp/loader/entries/arch.conf
+    echo "label Arch Linux" >> /mnt/efi/loader/entries/arch.conf
+    echo "linux /EFI/arch/vmlinuz-linux" >> /mnt/efi/loader/entries/arch.conf
+    echo "initrd /EFI/arch/initramfs-linux.img" >> /mnt/efi/loader/entries/arch.conf
+    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux.img" >> /mnt/efi/loader/entries/arch.conf
+
+    echo "label Arch Linux Zen" >> /mnt/efi/loader/entries/arch-zen.conf
+    echo "linux /EFI/arch/vmlinuz-linux-zen" >> /mnt/efi/loader/entries/arch-zen.conf
+    echo "initrd /EFI/arch/initramfs-linux-zen.img" >> /mnt/efi/loader/entries/arch-zen.conf
+    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux-zen.img" >> /mnt/efi/loader/entries/arch-zen.conf
 } # }}}
 install_puppet_tools() # {{{
 {
     set +e
-    chroot_command "gem install rdoc"
-    chroot_command "gem install r10k"
-    chroot_command "gem install hiera-eyaml"
+    chroot_command "gem install --no-user-install rdoc"
+    chroot_command "gem install --no-user-install r10k"
+    chroot_command "gem install --no-user-install hiera-eyaml"
     set -e
 } # }}}
 get_puppet_code() # {{{
@@ -255,7 +255,7 @@ get_puppet_modules() # {{{
 {
     cat <<'END' | arch-chroot /mnt su -l root
     cd /puppet
-    /root/.gem/ruby/2.5.0/bin/r10k puppetfile install
+    r10k puppetfile install
 END
 } # }}}
 create_custom_facts() # {{{
@@ -286,7 +286,7 @@ install_base_system
 setup_locales
 setup_hostname
 create_initcpio
-setup_efi
+# setup_efi
 setup_systemd_boot
 install_puppet_tools
 get_puppet_code

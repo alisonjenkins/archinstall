@@ -166,7 +166,7 @@ install_base_system() # {{{
     echo "Installing system"
     mkdir -p /mnt/etc/
     genfstab -L /mnt > /mnt/etc/fstab
-    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git puppet wget ruby-shadow linux-zen linux-zen-headers
+    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git puppet wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms
 } # }}}
 setup_locales() # {{{
 {

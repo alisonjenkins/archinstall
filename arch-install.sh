@@ -166,7 +166,7 @@ install_base_system() # {{{
     echo "Installing system"
     mkdir -p /mnt/etc/
     genfstab -L /mnt > /mnt/etc/fstab
-    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git puppet wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd
+    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd
 } # }}}
 setup_locales() # {{{
 {
@@ -215,27 +215,16 @@ install_puppet_tools() # {{{
     chroot_command "gem install --no-user-install hiera-eyaml"
     set -e
 } # }}}
-get_puppet_code() # {{{
+get_ansible_code() # {{{
 {
-    chroot_command "git clone --depth=1 https://github.com/alanjjenkins/puppet.git /puppet"
+    chroot_command "rm -Rf /etc/ansible"
+    chroot_command "git clone --depth=1 --recurse-submodules -j8 https://gitlab.com/alanjjenkins/ansible.git /etc/ansible/"
 } #}}}
-get_puppet_modules() # {{{
+run_ansible() # {{{
 {
     cat <<'END' | arch-chroot /mnt su -l root
-    cd /puppet
-    r10k puppetfile install
-END
-} # }}}
-create_custom_facts() # {{{
-{
-    mkdir -p /mnt/etc/facter/facts.d
-    echo "$FACTS" | tr ',' '\n' > /mnt/etc/facter/facts.d/facts.txt
-} # }}}
-perform_puppet_run() # {{{
-{
-    cat <<'END' | arch-chroot /mnt su -l root
-    cd /puppet/
-    ./apply.sh
+    cd /etc/ansible/
+    ansible-playbook plabooks/desktop.yml
 END
 } # }}}
 
@@ -256,7 +245,5 @@ setup_hostname
 create_initcpio
 setup_systemd_boot
 install_puppet_tools
-get_puppet_code
-create_custom_facts
-get_puppet_modules
-perform_puppet_run
+get_ansible_code
+run_ansible

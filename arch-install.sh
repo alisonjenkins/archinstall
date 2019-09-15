@@ -189,38 +189,6 @@ create_initcpio() # {{{
     chroot_command "mkinitcpio -p linux"
     chroot_command "mkinitcpio -p linux-zen"
 } # }}}
-# setup_efi() # {{{
-# {
-#     echo "Setup EFI"
-#     mkdir -p /mnt/boot/esp/EFI/arch
-#     cp /mnt/boot/vmlinuz-linux /mnt/boot/esp/EFI/arch
-#     cp /mnt/boot/initramfs-linux.img /mnt/boot/esp/EFI/arch
-
-#     cat <<'EOF' >> /mnt/etc/systemd/system/efistub-update.path
-#     [Unit]
-#     Description=Copy EFISTUB Kernel to EFI System Partition
-
-#     [Path]
-#     PathChanged=/boot/initramfs-linux-fallback.img
-
-#     [Install]
-#     WantedBy=multi-user.target
-#     WantedBy=system-update.target
-# EOF
-
-#     cat <<'EOF' >> /mnt/etc/systemd/system/efistub-update.service
-#     [Unit]
-#     Description=Copy EFISTUB Kernel to EFI System Partition
-
-#     [Service]
-#     Type=oneshot
-#     ExecStart=/usr/bin/cp -f /boot/vmlinuz-linux /boot/esp/EFI/arch/vmlinuz-linux
-#     ExecStart=/usr/bin/cp -f /boot/initramfs-linux.img /boot/esp/EFI/arch/initramfs-linux.img
-#     ExecStart=/usr/bin/cp -f /boot/initramfs-linux-fallback.img /boot/esp/EFI/arch/initramfs-linux-fallback.img
-# EOF
-
-#     chroot_command "systemctl enable efistub-update.path"
-# } # }}}
 setup_systemd_boot() # {{{
 {
     echo "Setting up systemd-boot"
@@ -286,7 +254,6 @@ install_base_system
 setup_locales
 setup_hostname
 create_initcpio
-# setup_efi
 setup_systemd_boot
 install_puppet_tools
 get_puppet_code

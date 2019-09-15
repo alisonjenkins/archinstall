@@ -207,14 +207,6 @@ setup_systemd_boot() # {{{
     echo "initrd /EFI/arch/initramfs-linux-zen.img" >> /mnt/efi/loader/entries/arch-zen.conf
     echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux-zen.img" >> /mnt/efi/loader/entries/arch-zen.conf
 } # }}}
-install_puppet_tools() # {{{
-{
-    set +e
-    chroot_command "gem install --no-user-install rdoc"
-    chroot_command "gem install --no-user-install r10k"
-    chroot_command "gem install --no-user-install hiera-eyaml"
-    set -e
-} # }}}
 get_ansible_code() # {{{
 {
     chroot_command "rm -Rf /etc/ansible"
@@ -244,6 +236,5 @@ setup_locales
 setup_hostname
 create_initcpio
 setup_systemd_boot
-install_puppet_tools
 get_ansible_code
 run_ansible

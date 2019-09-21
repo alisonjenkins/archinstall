@@ -218,7 +218,7 @@ run_ansible() # {{{
 {
     cat <<'END' | arch-chroot /mnt su -l root
     cd /etc/ansible/
-    ansible-playbook plabooks/desktop.yml
+    ansible-playbook playbooks/desktop.yml
 END
 } # }}}
 

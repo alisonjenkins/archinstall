@@ -166,7 +166,7 @@ install_base_system() # {{{
     echo "Installing system"
     mkdir -p /mnt/etc/
     genfstab -L /mnt > /mnt/etc/fstab
-    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd
+    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd intel-ucode
 } # }}}
 setup_locales() # {{{
 {
@@ -199,13 +199,15 @@ setup_systemd_boot() # {{{
 
     echo "label Arch Linux" >> /mnt/efi/loader/entries/arch.conf
     echo "linux /EFI/arch/vmlinuz-linux" >> /mnt/efi/loader/entries/arch.conf
+    echo "initrd /EFI/arch/intel-ucode.img" >> /mnt/efi/loader/entries/arch.conf
     echo "initrd /EFI/arch/initramfs-linux.img" >> /mnt/efi/loader/entries/arch.conf
-    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux.img" >> /mnt/efi/loader/entries/arch.conf
+    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux.img button.lid_init_state=open quiet splash loglevel=3 rd.udev.log-priority=3 vt.global_cursor_default=0 vga=current i915.fastboot=1 i915.enable_gvt=1 kvm.ignore_msrs=1 intel_iommu=on iommu=pt" >> /mnt/efi/loader/entries/arch.conf
 
     echo "label Arch Linux Zen" >> /mnt/efi/loader/entries/arch-zen.conf
+    echo "initrd /EFI/arch/intel-ucode.img" >> /mnt/efi/loader/entries/arch-zen.conf
     echo "linux /EFI/arch/vmlinuz-linux-zen" >> /mnt/efi/loader/entries/arch-zen.conf
     echo "initrd /EFI/arch/initramfs-linux-zen.img" >> /mnt/efi/loader/entries/arch-zen.conf
-    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux-zen.img" >> /mnt/efi/loader/entries/arch-zen.conf
+    echo "options cryptdevice=${LUKSUUID}:lvm root=/dev/mapper/volgroup-lvolroot resume=/dev/mapper/volgroup-lvolswap rw initrd=/EFI/arch/initramfs-linux-zen.img button.lid_init_state=open quiet splash loglevel=3 rd.udev.log-priority=3 vt.global_cursor_default=0 vga=current i915.fastboot=1 i915.enable_gvt=1 kvm.ignore_msrs=1 intel_iommu=on iommu=pt" >> /mnt/efi/loader/entries/arch-zen.conf
 } # }}}
 get_ansible_code() # {{{
 {

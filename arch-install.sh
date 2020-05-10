@@ -166,7 +166,7 @@ install_base_system() # {{{
     echo "Installing system"
     mkdir -p /mnt/etc/
     genfstab -L /mnt > /mnt/etc/fstab
-    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd intel-ucode
+    pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd intel-ucode lvm2 xfsprogs
 } # }}}
 setup_locales() # {{{
 {
@@ -180,7 +180,7 @@ setup_hostname() { # {{{
     echo "Setting hostname to $REQUIRED_HOSTNAME"
     #chroot_command "bash echo 'test' > /etc/hostname"
     echo "$REQUIRED_HOSTNAME" > /mnt/etc/hostname
-    chroot_command "hostname \"$REQUIRED_HOSTNAME\""
+    chroot_command "hostnamectl set-hostname \"$REQUIRED_HOSTNAME\""
 } # }}}
 create_initcpio() # {{{
 {

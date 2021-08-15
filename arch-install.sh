@@ -207,7 +207,7 @@ setup_systemd_boot() # {{{
 get_ansible_code() # {{{
 {
     chroot_command "rm -Rf /etc/ansible"
-    chroot_command "git clone --depth=1 --recurse-submodules -j8 git@github.com:alanjjenkins/ansible.git /etc/ansible/"
+    chroot_command "git clone --depth=1 --recurse-submodules -j8 https://github.com/alanjjenkins/ansible.git /etc/ansible/"
 } #}}}
 run_ansible() # {{{
 {

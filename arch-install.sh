@@ -39,7 +39,7 @@ chroot_command() # {{{
 } # }}}
 install_deps() # {{{
 {
-    pacman -Sy --noconfirm jq lvm2 btrfs-progs
+    pacman -Sy --noconfirm jq lvm2 btrfs-progs dialog
 } # }}}
 select_install_disk() # {{{
 {
@@ -55,16 +55,16 @@ select_install_disk() # {{{
         fi
     done
 
-    COMMAND="$(which dialog) --stdout --menu \"Choose the disk to install to (all data will be destroyed on the selected disk):\" 80 80 70 ${DISKS}"
+    COMMAND="$(command -v dialog) --stdout --menu \"Choose the disk to install to (all data will be destroyed on the selected disk):\" 80 80 70 ${DISKS}"
     if ! SEL_DISK=$(eval $COMMAND)
     then
         clear
         echo "OK aborting installation as no disk selected."
         exit
     fi
-    COMMAND="$(which dialog) --clear"
+    COMMAND="$(command -v dialog) --clear"
     eval $COMMAND
-    COMMAND="$(which dialog) --yesno \"Are you sure you want to wipe ${SEL_DISK} and install Arch Linux?\" 5 80"
+    COMMAND="$(command -v dialog) --yesno \"Are you sure you want to wipe ${SEL_DISK} and install Arch Linux?\" 5 80"
     echo "$COMMAND"
 
     if ! eval $COMMAND
@@ -95,12 +95,6 @@ get_required_hostname() # {{{
     local COMMAND="dialog --stdout --inputbox \"Please enter the hostname you want to use for the system.\" 8 50"
     REQUIRED_HOSTNAME="$(eval $COMMAND)"
     dialog --clear
-} # }}}
-get_facter_facts() # {{{
-{
-    local COMMAND="dialog --stdout --inputbox \"Please enter any custom facter facts you want to use for the system separated by commas e.g. (owner=alan,envtype=prod).\" 8 50"
-    FACTS="$(eval $COMMAND)"
-    clear
 } # }}}
 wipe_disk() # {{{
 {
@@ -166,6 +160,7 @@ install_base_system() # {{{
     echo "Installing system"
     mkdir -p /mnt/etc/
     genfstab -L /mnt > /mnt/etc/fstab
+    sed -i 's#/mnt/efi/EFI/arch#/efi/EFI/arch#' /mnt/etc/fstab
     pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux linux-headers linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd intel-ucode lvm2 xfsprogs linux-firmware
 } # }}}
 setup_locales() # {{{
@@ -226,7 +221,6 @@ install_deps
 select_install_disk
 get_encryption_password
 get_required_hostname
-get_facter_facts
 wipe_disk
 partition_disk
 format_partitions

@@ -70,8 +70,20 @@ select_install_disk() { # {{{
 } # }}}
 
 get_encryption_password() { # {{{
-	local COMMAND="dialog --stdout --passwordbox \"Please enter the password to use for disk encryption\" 8 50"
-	ENCRPYTION_PASS="$(eval $COMMAND)"
+	while true do
+		local COMMAND="dialog --stdout --passwordbox \"Please enter the password to use for disk encryption\" 8 50"
+		ENCRPYTION_PASS="$(eval $COMMAND)"
+
+		local COMMAND="dialog --stdout --passwordbox \"Please confirm the password to use for disk encryption\" 8 50"
+		CONFIRM_ENCRPYTION_PASS="$(eval $COMMAND)"
+
+		if [ "$ENCRPYTION_PASS" == "$CONFIRM_ENCRPYTION_PASS" ]; then
+			break
+		fi
+
+		dialog --infobox --timeout 3 \"The password and confirmation password did not match.... please try again\" 8 50"
+	done
+
 	dialog --clear
 } # }}}
 

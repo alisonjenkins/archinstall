@@ -87,6 +87,12 @@ get_encryption_password() { # {{{
 	dialog --clear
 } # }}}
 
+get_ansible_repo() { # {{{
+	local COMMAND="dialog --stdout --inputbox \"Please enter the git repository HTTPS clone URL to clone the Ansible code from\" 8 50"
+	ANSIBLE_REPO_URL="$(eval $COMMAND)"
+	dialog --clear
+} # }}}
+
 get_required_hostname() { # {{{
 	local COMMAND="dialog --stdout --inputbox \"Please enter the hostname you want to use for the system.\" 8 50"
 	REQUIRED_HOSTNAME="$(eval $COMMAND)"
@@ -195,7 +201,7 @@ setup_systemd_boot() { # {{{
 
 get_ansible_code() { # {{{
 	chroot_command "rm -Rf /etc/ansible"
-	chroot_command "git clone --depth=1 --recurse-submodules -j8 https://github.com/alanjjenkins/ansible.git /etc/ansible/"
+	chroot_command "git clone --depth=1 --recurse-submodules -j8 $ANSIBLE_REPO_URL /etc/ansible/"
 } #}}}
 
 run_ansible() { # {{{

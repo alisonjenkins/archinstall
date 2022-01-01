@@ -1,14 +1,4 @@
 #!/bin/bash
-## stage 1 ##
-# enable multilib
-# ex - /etc/pacman.conf << end-of-script
-# 93
-# s/#//
-# +
-# s/#//
-# wq
-# end-of-script
-
 set -euo pipefail
 IFS=$'\n\t'
 

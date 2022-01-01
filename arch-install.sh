@@ -133,7 +133,6 @@ mount_partitions() { # {{{
 
 function find_fastest_mirror() { # {{{
 	pacman -S --noconfirm reflector pacman-contrib
-	#curl -s "https://www.archlinux.org/mirrorlist/?country=FR&country=GB&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 	reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 	mkdir -p /mnt/etc/pacman.d
 	cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
@@ -157,7 +156,6 @@ setup_locales() { # {{{
 
 setup_hostname() { # {{{
 	echo "Setting hostname to $REQUIRED_HOSTNAME"
-	#chroot_command "bash echo 'test' > /etc/hostname"
 	echo "$REQUIRED_HOSTNAME" >/mnt/etc/hostname
 	chroot_command "hostnamectl set-hostname \"$REQUIRED_HOSTNAME\""
 } # }}}

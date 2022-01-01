@@ -1,4 +1,5 @@
 #!/bin/bash
+# vim: foldmethod=marker foldlevel=0
 set -euo pipefail
 IFS=$'\n\t'
 

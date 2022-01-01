@@ -143,7 +143,7 @@ install_base_system() { # {{{
 	mkdir -p /mnt/etc/
 	genfstab -L /mnt >/mnt/etc/fstab
 	sed -i 's#/mnt/efi/EFI/arch#/efi/EFI/arch#' /mnt/etc/fstab
-	pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux linux-headers linux-zen linux-zen-headers linux-headers nvidia-dkms virtualbox-host-dkms iwd intel-ucode lvm2 xfsprogs linux-firmware
+	pacstrap /mnt base base-devel curl efibootmgr btrfs-progs git ansible wget ruby-shadow linux linux-headers linux-headers iwd intel-ucode lvm2 xfsprogs linux-firmware
 } # }}}
 
 setup_locales() { # {{{
@@ -164,7 +164,6 @@ create_initcpio() { # {{{
 	echo "Creating initcpio"
 	chroot_command "sed -i 's/base udev autodetect modconf block filesystems keyboard fsck/base udev encrypt autodetect modconf block lvm2 resume filesystems keyboard fsck/g' /etc/mkinitcpio.conf"
 	chroot_command "mkinitcpio -p linux"
-	chroot_command "mkinitcpio -p linux-zen"
 } # }}}
 
 setup_systemd_boot() { # {{{

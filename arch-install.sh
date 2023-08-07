@@ -82,7 +82,7 @@ get_encryption_password() { # {{{
 			break
 		fi
 
-		dialog --infobox --timeout 3 \"The password and confirmation password did not match.... please try again\" 8 50"
+		dialog --infobox --timeout 3 "The password and confirmation password did not match.... please try again" 8 50
 	done
 
 	dialog --clear

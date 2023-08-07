@@ -189,7 +189,8 @@ create_initcpio() { # {{{
 setup_systemd_boot() { # {{{
 	echo "Setting up systemd-boot"
 	get_partition 1
-	local LUKSUUID=$(blkid /dev/$PART_NAME | awk '{ print $2; }' | sed 's/"//g')
+  local LUKSUUID;
+	LUKSUUID=$(blkid /dev/$PART_NAME | awk '{ print $2; }' | sed 's/"//g')
 
 	chroot_command "bootctl --path=/efi/ install"
 

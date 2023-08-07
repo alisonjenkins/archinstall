@@ -4,7 +4,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 init_pacman_keyring() { # {{{
-	pacman -Sy archlinux-keyring
+	pacman -Sy --noconfirm archlinux-keyring
 	pacman-key --init
 	pacman-key --populate
 } # }}}
@@ -76,8 +76,7 @@ select_install_disk() { # {{{
 } # }}}
 
 get_encryption_password() { # {{{
-	while true
-  do
+	while true; do
 		local COMMAND="dialog --stdout --passwordbox \"Please enter the password to use for disk encryption\" 8 50"
 		ENCRPYTION_PASS="$(eval $COMMAND)"
 
@@ -195,7 +194,7 @@ create_initcpio() { # {{{
 setup_systemd_boot() { # {{{
 	echo "Setting up systemd-boot"
 	get_partition 1
-  local LUKSUUID;
+	local LUKSUUID
 	LUKSUUID=$(blkid /dev/$PART_NAME | awk '{ print $2; }' | sed 's/"//g')
 
 	chroot_command "bootctl --path=/efi/ install"

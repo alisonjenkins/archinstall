@@ -3,6 +3,12 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+init_pacman_keyring() { # {{{
+	pacman -Sy archlinux-keyring
+	pacman-key --init
+	pacman-key --populate
+} # }}}
+
 get_partitions() { # {{{
 	local DISKNAME="$1"
 
@@ -213,6 +219,7 @@ run_ansible() { # {{{
 END
 } # }}}
 
+init_pacman_keyring
 install_deps
 select_install_disk
 get_encryption_password

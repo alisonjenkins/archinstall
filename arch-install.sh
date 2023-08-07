@@ -70,7 +70,8 @@ select_install_disk() { # {{{
 } # }}}
 
 get_encryption_password() { # {{{
-	while true do
+	while true
+  do
 		local COMMAND="dialog --stdout --passwordbox \"Please enter the password to use for disk encryption\" 8 50"
 		ENCRPYTION_PASS="$(eval $COMMAND)"
 
